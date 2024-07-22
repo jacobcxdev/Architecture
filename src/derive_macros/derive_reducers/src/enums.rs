@@ -21,7 +21,7 @@ pub fn derive_macro(identifier: Ident, data: DataEnum) -> TokenStream {
             quote! {
                 #identifier::#name(state) => {
                     if let Ok(action) = action.clone().try_into() {
-                        composable::Reducer::reduce(state, action, effects.scope());
+                        composable::Reducer::reduce(state, action, send.scope());
                     }
                 }
             }

@@ -20,7 +20,7 @@ pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
             let name = &field.ident;
             quote! {
                 if let Ok(action) = action.clone().try_into() {
-                    composable::Reducer::reduce(&mut self.#name, action, effects.scope());
+                    composable::Reducer::reduce(&mut self.#name, action, send.scope());
                 }
             }
         });
