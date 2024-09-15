@@ -1,11 +1,11 @@
 #![allow(dead_code)]
 #![allow(unused_variables)]
 
+use composable::Store;
 use futures::executor::block_on;
+use rfd::{FileDialog, MessageDialog, MessageLevel};
 use std::collections::BTreeMap;
 use std::sync::Arc;
-
-use composable::Store;
 use window::Action;
 
 use window::menubar::Menu;
@@ -14,12 +14,13 @@ use window::{
     LogicalSize, Size, StartCause, Window, WindowEvent, WindowId,
 };
 
-mod frames;
+mod ink;
+mod script;
 mod wgpu;
 mod window;
 
 struct State {
-    stores: BTreeMap<WindowId, (Store<frames::State>, Arc<Window>)>,
+    stores: BTreeMap<WindowId, (Store<script::State>, Arc<Window>)>,
 
     proxy: EventLoopProxy,
     menubar: Menu,
@@ -35,13 +36,13 @@ impl State {
 }
 
 impl ApplicationHandler<Action> for State {
-    fn new_events(&mut self, event_loop: &ActiveEventLoop, cause: StartCause) {
+    fn new_events(&mut self, active: &ActiveEventLoop, cause: StartCause) {
         if cause == StartCause::Init {
             self.proxy.send_event(Action::NewWindow).unwrap()
         }
     }
 
-    fn resumed(&mut self, event_loop: &ActiveEventLoop) {}
+    fn resumed(&mut self, active: &ActiveEventLoop) {}
 
     fn user_event(&mut self, active: &ActiveEventLoop, event: Action) {
         match event {
@@ -52,9 +53,34 @@ impl ApplicationHandler<Action> for State {
                 let id = window.id();
                 let proxy = self.proxy.clone();
                 let wgpu = block_on(wgpu::Surface::new(window.clone())); // must be on main thread
+                let store = Store::new(move || script::State::new(wgpu, proxy, id));
+                self.stores.insert(id, (store, window.clone()));
 
-                let store = Store::new(move || frames::State::new(wgpu, proxy, id));
-                self.stores.insert(id, (store, window));
+                let file = FileDialog::new()
+                    .add_filter("Fountain", &["fountain", "spmd"])
+                    .add_filter("Inkle", &["ink"])
+                    .add_filter("Markdown", &["md"])
+                    .set_parent(&window)
+                    .pick_file();
+
+                match file {
+                    None => self.window_event(active, id, WindowEvent::CloseRequested),
+                    Some(path) => {
+                        self.stores[&id].0.send(script::Action::Parse(path));
+                    }
+                }
+            }
+            Action::ErrorDialog(description, id) => {
+                if let Some(store) = self.stores.get(&id) {
+                    let _ = MessageDialog::new()
+                        .set_level(MessageLevel::Error)
+                        .set_title("Could not open file")
+                        .set_description(description)
+                        .set_parent(&store.1)
+                        .show();
+
+                    self.window_event(active, id, WindowEvent::CloseRequested);
+                }
             }
             Action::DefaultSize => {
                 if let Some(window) = self.front_window() {
@@ -65,17 +91,17 @@ impl ApplicationHandler<Action> for State {
         }
     }
 
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
+    fn window_event(&mut self, active: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
         match event {
             WindowEvent::RedrawRequested => {
                 self.stores
                     .entry(id)
-                    .and_modify(|store| store.0.send(frames::Action::Redraw));
+                    .and_modify(|store| store.0.send(script::Action::Redraw));
             }
             WindowEvent::Resized(size) => {
                 self.stores.entry(id).and_modify(|store| {
                     let (width, height) = size.into();
-                    let resize = frames::Action::Resize { width, height };
+                    let resize = script::Action::Resize { width, height };
 
                     store.0.sync(resize);
                 });
@@ -83,7 +109,7 @@ impl ApplicationHandler<Action> for State {
             WindowEvent::CloseRequested => {
                 self.stores.remove(&id);
                 if self.stores.is_empty() {
-                    event_loop.exit();
+                    active.exit();
                 }
             }
             _ => {}

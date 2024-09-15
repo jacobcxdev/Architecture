@@ -29,13 +29,13 @@ mod typography;
 /// > ![Sample](https://github.com/rsms/inter/raw/master/misc/readme/intro.png)
 ///
 /// [Release 4.0](https://github.com/rsms/inter/releases/tag/v4.0)
-pub struct Inter<'a, Style> {
+pub struct Inter<Style> {
     marker: PhantomData<Style>,
-    font: Font<'a>,
+    font: Font<'static>,
 }
 
-impl<'a, Style> Deref for Inter<'a, Style> {
-    type Target = Font<'a>;
+impl<Style> Deref for Inter<Style> {
+    type Target = Font<'static>;
 
     fn deref(&self) -> &Self::Target {
         &self.font

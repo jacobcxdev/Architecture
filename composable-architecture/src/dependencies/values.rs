@@ -309,7 +309,7 @@ Either register the dependency on the TestStore or use with_dependency(…) with
     ///
     /// Holding this reference is not advised as it will not reflect further overrides of this dependency.
     #[inline(always)]
-    pub fn static_ref() -> &'static T {
+    pub fn as_ref() -> &'static T {
         #[allow(unsafe_code)]
         unsafe {
             std::mem::transmute(Self::default().get_or_insert_default())

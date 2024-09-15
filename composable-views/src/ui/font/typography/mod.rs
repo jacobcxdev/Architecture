@@ -12,7 +12,7 @@ mod scale;
 const InterVariable: &[u8] = include_bytes!("../InterVariable.ttf");
 
 #[inline(never)]
-fn font<Design>(weight: f32, scale: f32) -> Inter<'static, Design> {
+fn font<Design>(weight: f32, scale: f32) -> Inter<Design> {
     let accessibility = Dependency::<accessibility::Scale>::new();
 
     Inter {
@@ -35,23 +35,23 @@ pub mod title {
     /// Small variant
     pub struct S;
 
-    impl DependencyDefault for Inter<'static, L> {}
-    impl DependencyDefault for Inter<'static, M> {}
-    impl DependencyDefault for Inter<'static, S> {}
+    impl DependencyDefault for Inter<L> {}
+    impl DependencyDefault for Inter<M> {}
+    impl DependencyDefault for Inter<S> {}
 
-    impl Default for Inter<'static, L> {
+    impl Default for Inter<L> {
         fn default() -> Self {
             font(650.0, 6.0)
         }
     }
 
-    impl Default for Inter<'static, M> {
+    impl Default for Inter<M> {
         fn default() -> Self {
             font(650.0, 4.0)
         }
     }
 
-    impl Default for Inter<'static, S> {
+    impl Default for Inter<S> {
         fn default() -> Self {
             font(650.0, 3.0)
         }
@@ -69,23 +69,23 @@ pub mod body {
     /// Small variant
     pub struct S;
 
-    impl DependencyDefault for Inter<'static, L> {}
-    impl DependencyDefault for Inter<'static, M> {}
-    impl DependencyDefault for Inter<'static, S> {}
+    impl DependencyDefault for Inter<L> {}
+    impl DependencyDefault for Inter<M> {}
+    impl DependencyDefault for Inter<S> {}
 
-    impl Default for Inter<'static, L> {
+    impl Default for Inter<L> {
         fn default() -> Self {
             font(500.0, 4.0)
         }
     }
 
-    impl Default for Inter<'static, M> {
+    impl Default for Inter<M> {
         fn default() -> Self {
             font(500.0, 3.0)
         }
     }
 
-    impl Default for Inter<'static, S> {
+    impl Default for Inter<S> {
         fn default() -> Self {
             font(400.0, 2.0)
         }
@@ -103,23 +103,23 @@ pub mod label {
     /// Small variant
     pub struct S;
 
-    impl DependencyDefault for Inter<'static, L> {}
-    impl DependencyDefault for Inter<'static, M> {}
-    impl DependencyDefault for Inter<'static, S> {}
+    impl DependencyDefault for Inter<L> {}
+    impl DependencyDefault for Inter<M> {}
+    impl DependencyDefault for Inter<S> {}
 
-    impl Default for Inter<'static, L> {
+    impl Default for Inter<L> {
         fn default() -> Self {
             font(600.0, 2.0)
         }
     }
 
-    impl Default for Inter<'static, M> {
+    impl Default for Inter<M> {
         fn default() -> Self {
             font(600.0, 1.0)
         }
     }
 
-    impl Default for Inter<'static, S> {
+    impl Default for Inter<S> {
         fn default() -> Self {
             font(400.0, 0.0)
         }
