@@ -1,11 +1,13 @@
+use crate::ink::grammer;
+use crate::window::Dialogs;
 use crate::{gpu, settings, window};
 
-use crate::ink::grammer;
-use composable::dependencies::with_dependency;
+use composable::dependencies::{with_dependency, Dependency};
 use composable::{Effects, From, Reducer, TryInto};
 use composable_views::gpu::Output;
 use composable_views::ui::spacer;
 use composable_views::View;
+
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
@@ -23,11 +25,15 @@ pub struct State {
 
 #[derive(Clone, Debug, From, TryInto)]
 pub enum Action {
+    OpenFile,
     Parse(PathBuf),
-    Margin(margin::Action),
+    CloseFile,
 
+    DefaultSize,
     Resize { width: u32, height: u32 },
     Redraw,
+
+    Margin(margin::Action),
 }
 
 impl Reducer for State {
@@ -37,6 +43,15 @@ impl Reducer for State {
     fn reduce(&mut self, action: Action, send: impl Effects<Action>) {
         use Action::*;
         match action {
+            Redraw => self.redraw(send),
+
+            OpenFile => send.future(async move {
+                let dialogs = Dependency::<Box<dyn Dialogs>>::new();
+                Some(match dialogs.unwrap().open().await {
+                    None => CloseFile,
+                    Some(path) => Parse(path),
+                })
+            }),
             Parse(path) => {
                 if let Err(description) = self.parse(path) {
                     self.proxy
@@ -44,13 +59,23 @@ impl Reducer for State {
                         .unwrap()
                 }
             }
+            CloseFile => {
+                let dialogs = Dependency::<Box<dyn Dialogs>>::new();
+                dialogs.unwrap().close();
+            }
 
-            Margin(_) => {}
-            Redraw => self.redraw(send),
+            DefaultSize => {
+                let dialogs = Dependency::<Box<dyn Dialogs>>::new();
+                let (width, height) = self.settings.window_size().into();
+
+                dialogs.unwrap().resize(width as u32, height as u32);
+            }
             Resize { width, height } => {
                 self.wgpu.resize(width, height);
                 self.redraw(send);
             }
+
+            Margin(_) => {}
         }
     }
 }

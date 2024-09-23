@@ -1,7 +1,6 @@
 use composable_views::text::Font;
 use composable_views::{Size, View};
 
-use crate::settings;
 use serde::{de::Deserializer, ser::Serializer, Deserialize, Serialize};
 
 #[allow(non_upper_case_globals)]
@@ -128,7 +127,7 @@ impl PageSize {
     }
 }
 
-impl settings::State {
+impl State {
     pub fn window_size(&mut self) -> Size {
         let scale = self.em();
 

@@ -7,16 +7,18 @@ use futures::executor::LocalPool;
 use futures::task::LocalSpawnExt;
 use futures::{pin_mut, StreamExt};
 
-use crate::dependencies::with_dependency;
+use crate::dependencies::{with_dependencies, with_dependency, Tuple};
 use crate::effects::Executor;
 use crate::reducer::Reducer;
 use crate::store::channel::{channel, WeakSender};
 use crate::store::Store;
 
 impl<State: Reducer> Store<State> {
-    pub(crate) fn runtime<F>(with: F) -> Self
+    pub(crate) fn runtime<F, D, T>(with: F, dependencies: D) -> Self
     where
         F: (FnOnce() -> State) + Send + 'static,
+        D: (FnOnce() -> T) + Send + 'static,
+        T: Tuple + 'static,
         <State as Reducer>::Action: Send + 'static,
         <State as Reducer>::Output: Send + From<State> + 'static,
     {
@@ -34,40 +36,43 @@ impl<State: Reducer> Store<State> {
                 let effects = Rc::new(RefCell::new(VecDeque::new()));
 
                 let executor = Executor::new(spawner.clone(), actions);
+                let dependencies = dependencies();
 
                 with_dependency(executor, || {
-                    unthreaded.run_until(async {
-                        pin_mut!(receiver);
-                        while let Some(result) = receiver.next().await {
-                            match result {
-                                Ok(action) => {
-                                    state.reduce(action, Rc::downgrade(&effects));
-
-                                    // wrapping the `borrow_mut` in a closure to ensure that the
-                                    // `borrow_mut` is dropped immediately so that the action is
-                                    // free to push further actions to `effects`
-                                    let next = || effects.borrow_mut().pop_front();
-
-                                    while let Some(action) = next() {
+                    with_dependencies(dependencies, || {
+                        unthreaded.run_until(async {
+                            pin_mut!(receiver);
+                            while let Some(result) = receiver.next().await {
+                                match result {
+                                    Ok(action) => {
                                         state.reduce(action, Rc::downgrade(&effects));
+
+                                        // wrapping the `borrow_mut` in a closure to ensure that the
+                                        // `borrow_mut` is dropped immediately so that the action is
+                                        // free to push further actions to `effects`
+                                        let next = || effects.borrow_mut().pop_front();
+
+                                        while let Some(action) = next() {
+                                            state.reduce(action, Rc::downgrade(&effects));
+                                        }
+                                    }
+                                    Err(parked) => {
+                                        spawner
+                                            // `unpark` a thread that is waiting for the store to shut down;
+                                            //  we use a future so that it happens after other (waiting) futures
+                                            //
+                                            //  See: `Store::into_inner` for the other side of this
+                                            .spawn_local(async move {
+                                                parked.unpark();
+                                            })
+                                            .expect("unpark");
                                     }
                                 }
-                                Err(parked) => {
-                                    spawner
-                                        // `unpark` a thread that is waiting for the store to shut down;
-                                        //  we use a future so that it happens after other (waiting) futures
-                                        //
-                                        //  See: `Store::into_inner` for the other side of this
-                                        .spawn_local(async move {
-                                            parked.unpark();
-                                        })
-                                        .expect("unpark");
-                                }
                             }
-                        }
-                    });
+                        });
 
-                    state.into()
+                        state.into()
+                    })
                 })
             })
             .unwrap();

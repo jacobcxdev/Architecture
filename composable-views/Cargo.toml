@@ -30,8 +30,9 @@ ariadne = "0.4.1"
 
 serde = { version = "1.0.210", features = ["derive"] }
 toml_edit = { version = "0.22.20" , features = ["serde"]}
+async-trait = "0.1.82"
 directories = "5.0.1"
-rfd = "0.14.1"
+rfd = "0.15.0"
 
 winit = "0.30.5"
 meshopt = "0.3.0"
