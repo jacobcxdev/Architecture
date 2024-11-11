@@ -11,10 +11,10 @@ ui = []
 
 [dependencies]
 composable.workspace = true
-rustybuzz = "0.18.0"
+rustybuzz = "0.20.0"
 lyon = "1.0.1"
-usvg = "0.43.0"
-svg = "0.17.0"
+usvg = "0.44.0"
+svg = "0.18.0"
 
 
 [dev-dependencies]
@@ -24,20 +24,11 @@ insta.workspace = true
 ntest_timeout.workspace = true
 divan.workspace = true
 
-# examples
-chumsky = "1.0.0-alpha.7"
-ariadne = "0.4.1"
-
-serde = { version = "1.0.210", features = ["derive"] }
-toml_edit = { version = "0.22.20" , features = ["serde"]}
-async-trait = "0.1.82"
-directories = "5.0.1"
-rfd = "0.15.0"
 
 winit = "0.30.5"
-meshopt = "0.3.0"
-muda = "0.14.1"
-wgpu = "22.1.0"
+meshopt = "0.4.0"
+muda = "0.15.3"
+wgpu = "23.0.0"
 
 # platforms
 [target.'cfg(target_os = "windows")'.dependencies.windows-sys]
@@ -51,6 +42,3 @@ version = "0.26.0"
 name = "font_parsing"
 harness = false
 
-
-[[example]]
-name = "winit"
