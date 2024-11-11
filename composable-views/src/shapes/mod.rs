@@ -1,6 +1,8 @@
 use crate::{Bounds, Output, Size, Transform, View};
 use composable::dependencies::Dependency;
 
+use std::cell::Cell;
+
 mod rounded;
 
 pub trait Path: Sized {
@@ -12,7 +14,7 @@ pub trait Path: Sized {
 
     fn fixed(self, width: f32, height: f32) -> Shape<Self> {
         Shape {
-            size: Size::new(width, height),
+            size: Size::new(width, height).into(),
             path: self,
         }
     }
@@ -115,23 +117,32 @@ impl Path for Circle {
 
 #[doc(hidden)]
 pub struct Shape<T> {
-    size: Size,
+    size: Cell<Size>,
     path: T,
 }
 
 impl<T: Path> View for Shape<T> {
     #[inline(always)]
     fn size(&self) -> Size {
-        self.size
+        let size = self.size.get();
+
+        match (size.width.is_finite(), size.height.is_finite()) {
+            (true, true) => size,
+            (false, false) => Size::zero(),
+            (true, false) => Size::new(size.width, 0.0),
+            (false, true) => Size::new(0.0, size.height),
+        }
     }
 
     #[inline]
     fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
-        let size = match (self.size.width.is_finite(), self.size.height.is_finite()) {
-            (true, true) => self.size,
+        let current = self.size.get();
+
+        let size = match (current.width.is_finite(), current.height.is_finite()) {
+            (true, true) => current,
             (false, false) => bounds.size(),
-            (true, false) => Size::new(self.size.width, bounds.height()),
-            (false, true) => Size::new(bounds.width(), self.size.height),
+            (true, false) => Size::new(current.width, bounds.height()),
+            (false, true) => Size::new(bounds.width(), current.height),
         };
 
         self.path.draw(
@@ -147,21 +158,40 @@ impl<T: Path> View for Shape<T> {
     #[inline(always)]
     #[allow(refining_impl_trait)]
     fn fixed(mut self, width: f32, height: f32) -> Self {
-        self.size = Size::new(width, height);
+        *self.size.get_mut() = Size::new(width, height);
         self
     }
 
     #[inline(always)]
     #[allow(refining_impl_trait)]
     fn width(mut self, width: f32) -> Self {
-        self.size.width = width;
+        self.size.get_mut().width = width;
         self
     }
 
     #[inline(always)]
     #[allow(refining_impl_trait)]
     fn height(mut self, height: f32) -> Self {
-        self.size.height = height;
+        self.size.get_mut().height = height;
         self
+    }
+
+    #[inline(always)]
+    fn needs_layout(&self) -> bool {
+        self.size.get().is_finite() == false
+    }
+
+    #[inline]
+    fn update_layout(&self, size: Size, _bounds: Bounds) {
+        let current = self.size.get();
+
+        let size = match (current.width.is_finite(), current.height.is_finite()) {
+            (true, true) => current,
+            (false, false) => size,
+            (true, false) => Size::new(current.width, size.height),
+            (false, true) => Size::new(size.width, current.height),
+        };
+
+        self.size.set(size);
     }
 }
