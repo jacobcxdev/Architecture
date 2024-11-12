@@ -181,3 +181,53 @@ tuple_impl! { A B C D E F G H I J K L M N O P Q R S T U V W }
 tuple_impl! { A B C D E F G H I J K L M N O P Q R S T U V W X }
 tuple_impl! { A B C D E F G H I J K L M N O P Q R S T U V W X Y }
 // up to 25 views are supported
+
+impl<T: View, const N: usize> View for Horizontal<[T; N]> {
+    #[inline]
+    fn size(&self) -> Size {
+        self.0.iter().fold(Size::zero(), |mut size, view| {
+            let next = view.size();
+
+            size.width += next.width;
+            size.height = f32::max(size.height, next.height);
+            size
+        })
+    }
+
+    #[inline]
+    fn event(&self, event: Event, offset: Point, bounds: Bounds) {
+        self.0.iter().fold(bounds, |mut bounds, view| {
+            view.event(event, offset, bounds);
+
+            bounds.min.x += view.size().width;
+            bounds.min.x = f32::min(bounds.min.x, bounds.max.x);
+            bounds
+        });
+    }
+
+    #[inline]
+    fn draw(&self, bounds: Bounds, onto: &mut impl Output) {
+        self.0.iter().fold(bounds, |mut bounds, view| {
+            view.draw(bounds, onto);
+
+            bounds.min.x += view.size().width;
+            bounds.min.x = f32::min(bounds.min.x, bounds.max.x);
+            bounds
+        });
+    }
+}
+
+pub trait Layout {
+    /// Causes a tuple of `View`s to cascade horizontally, rather than vertically.
+    /// ## Note
+    /// For other views, nothing changes
+    #[allow(dead_code)]
+    fn across(self) -> impl View;
+}
+
+impl<V: View, const N: usize> Layout for [V; N] {
+    #[inline(always)]
+    fn across(self) -> impl View {
+        Horizontal(self)
+    }
+}

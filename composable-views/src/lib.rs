@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 pub use lyon::math::{Box2D as Bounds, Point, Size, Transform};
 
-pub use layout::Spacer;
+pub use layout::{Layout, Spacer};
 pub use modifiers::fixed::{Fixed, FixedHeight, FixedWidth};
 pub use modifiers::padding::Padding;
 pub use output::{gpu, svg, Output};
