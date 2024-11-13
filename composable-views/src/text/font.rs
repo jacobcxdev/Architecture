@@ -139,10 +139,10 @@ impl<'a> Font<'a> {
         Some(FontConfig {
             face,
             features: Vec::default(),
+            variations: Vec::default(),
             direction: None,
             script: Script::from_iso15924_tag(Tag::from_bytes(b"Zzzz")),
             language: None,
-            weight: None,
         })
     }
 }
@@ -152,10 +152,10 @@ impl<'a> Font<'a> {
 pub struct FontConfig<'a> {
     face: Face<'a>,
     features: Vec<Feature>,
+    variations: Vec<(Tag, f32)>,
     direction: Option<Direction>,
     script: Option<Script>,
     language: Option<Language>,
-    weight: Option<f32>,
 }
 
 impl<'a> FontConfig<'a> {
@@ -197,32 +197,27 @@ impl<'a> FontConfig<'a> {
 
     ///
     #[inline]
+    pub fn variation(mut self, tag: &[u8; 4], value: f32) -> Self {
+        self.variations
+            .push((Tag::from_bytes(tag), value));
+
+        self
+    }
+
+    ///
+    #[inline]
     pub fn weight(self, weight: f32) -> Self {
-        Self {
-            weight: Some(weight),
-            ..self
-        }
+        self.variation(b"wght", weight)
     }
 
     /// The final step in building a Font.
     #[inline(never)]
     pub fn size(mut self, size: f32) -> Font<'a> {
-        for axis in self.face.variation_axes().into_iter() {
-            match &axis.tag.to_bytes() {
-                b"opsz" => {
-                    let opsz = size.clamp(axis.min_value, axis.max_value);
-                    self.face.set_variation(axis.tag, opsz);
-                }
-                b"wght" => {
-                    let wght = self
-                        .weight
-                        .map(|w| w.clamp(axis.min_value, axis.max_value))
-                        .unwrap_or(axis.def_value);
+        // Always attempt to match optical sizing
+        self.face.set_variation(Tag::from_bytes(b"opsz"), size);
 
-                    self.face.set_variation(axis.tag, wght);
-                }
-                _ => {}
-            }
+        for (tag, value) in self.variations {
+            self.face.set_variation(tag, value);
         }
 
         // Using direction.unwrap_or_default() would give an Direction::Invalid
