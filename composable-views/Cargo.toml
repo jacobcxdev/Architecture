@@ -11,7 +11,7 @@ ui = []
 
 [dependencies]
 composable.workspace = true
-rustybuzz = "0.20.0"
+rustybuzz = "0.20.1"
 lyon = "1.0.1"
 usvg = "0.44.0"
 svg = "0.18.0"
