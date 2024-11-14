@@ -100,7 +100,8 @@ impl<'a> Font<'a> {
     pub fn text(&self, rgba: [u8; 4], string: &str) -> Text {
         let mut unicode = UnicodeBuffer::new();
         unicode.push_str(string);
-        unicode.set_script(Script::from_iso15924_tag(Tag::from_bytes(b"Zzzz")).unwrap());
+
+        unicode.set_script(Script::from_iso15924_tag(Tag::from_bytes(b"Latn")).unwrap());
 
         let glyphs = shape_with_plan(&self.face, &self.plan, unicode);
         let scale = self.size / self.face.units_per_em() as f32;
@@ -147,7 +148,7 @@ impl<'a> Font<'a> {
             features: Vec::default(),
             variations: Vec::default(),
             direction: None,
-            script: Script::from_iso15924_tag(Tag::from_bytes(b"Zzzz")),
+            script: Script::from_iso15924_tag(Tag::from_bytes(b"Latn")),
             language: None,
         })
     }
@@ -232,7 +233,7 @@ impl<'a> FontConfig<'a> {
 
         let script = self
             .script
-            .or_else(|| Script::from_iso15924_tag(Tag::from_bytes(b"Zzzz")));
+            .or_else(|| Script::from_iso15924_tag(Tag::from_bytes(b"Latn")));
 
         let plan = ShapePlan::new(
             &self.face,
