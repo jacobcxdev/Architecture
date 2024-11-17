@@ -2,18 +2,18 @@ use crate::gesture::{self, Id};
 use crate::{Bounds, Event, Output, Point, Size, View};
 use composable::Effects;
 
-pub struct TapGesture<V, E, A> {
-    id: Id,
-    view: V,
-    action: A,
-    send: E,
+pub struct TapGesture<V, A, E> {
+    pub(crate) id: Id,
+    pub(crate) view: V,
+    pub(crate) action: A,
+    pub(crate) send: E,
 }
 
-impl<V, E, A> View for TapGesture<V, E, A>
+impl<V, A, E> View for TapGesture<V, A, E>
 where
     V: View,
-    E: Effects<A>,
     A: Clone,
+    E: Effects<A>,
 {
     #[inline(always)]
     fn size(&self) -> Size {

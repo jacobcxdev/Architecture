@@ -7,6 +7,8 @@ pub use recognizer::*;
 
 mod tap;
 
+pub use tap::TapGesture;
+
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Id(pub(crate) std::num::NonZeroU128);
 

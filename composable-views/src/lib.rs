@@ -2,6 +2,7 @@ use std::ops::Deref;
 
 pub use lyon::math::{Box2D as Bounds, Point, Size, Transform};
 
+pub use gesture::{Id, TapGesture};
 pub use layout::{Layout, Spacer};
 pub use modifiers::fixed::{Fixed, FixedHeight, FixedWidth};
 pub use modifiers::padding::Padding;
@@ -11,7 +12,7 @@ pub use shapes::{Path, Shape};
 #[doc(inline)]
 pub use text::Text;
 
-use composable::{From, TryInto};
+use composable::{Effects, From, TryInto};
 
 /// Alias for `euclid::default::SideOffsets2D<f32>`
 pub type Offsets = lyon::geom::euclid::default::SideOffsets2D<f32>;
@@ -136,6 +137,25 @@ pub trait View: Sized {
     /// For other views, nothing changes
     fn across(self) -> impl View {
         self
+    }
+
+
+    fn on_tap<A, E>(
+        self,
+        id: Id,
+        action: A,
+        send: E,
+    ) -> TapGesture<Self, A, E>
+    where
+        A: Clone,
+        E: Effects<A>,
+    {
+        TapGesture {
+            id,
+            view: self,
+            action,
+            send,
+        }
     }
 }
 
