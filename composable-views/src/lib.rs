@@ -26,8 +26,6 @@ mod layout;
 mod modifiers;
 
 mod shapes;
-#[cfg(feature = "ui")]
-pub mod ui;
 
 /// User interface element and modifiers to re-configure it.
 pub trait View: Sized {
