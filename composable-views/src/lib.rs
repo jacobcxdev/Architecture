@@ -222,7 +222,7 @@ impl<T: View, E: View> View for Result<T, E> {
 
 /// [`View`] events.
 #[allow(missing_docs)]
-#[derive(Copy, Clone, From, TryInto)]
+#[derive(Copy, Clone, Debug, From, TryInto)]
 pub enum Event {
     Gesture(Gesture),
     Resize { width: u32, height: u32 },
@@ -230,7 +230,7 @@ pub enum Event {
 }
 
 /// touches… buttons…
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Gesture {
     Began { n: u8 },
     Moved { n: u8 },
