@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 pub use lyon::math::{Box2D as Bounds, Point, Size, Transform};
 
-pub use gesture::{Id, TapGesture};
+pub use gesture::{Id, TapGesture, Target};
 pub use layout::{Layout, Spacer};
 pub use modifiers::fixed::{Fixed, FixedHeight, FixedWidth};
 pub use modifiers::padding::Padding;
@@ -154,6 +154,29 @@ pub trait View: Sized {
             view: self,
             action,
             send,
+        }
+    }
+
+
+    fn on_tap_target<A, E>(
+        self,
+        id: Id,
+        action: A,
+        send: E,
+        size: Size,
+    ) -> Target<TapGesture<Self, A, E>>
+    where
+        A: Clone,
+        E: Effects<A>,
+    {
+        Target {
+            view: TapGesture {
+                id,
+                view: self,
+                action,
+                send,
+            },
+            minimum: size,
         }
     }
 }

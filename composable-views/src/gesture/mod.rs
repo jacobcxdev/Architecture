@@ -9,7 +9,7 @@ pub use std::num::NonZeroU128 as Id;
 
 mod tap;
 
-pub use tap::TapGesture;
+pub use tap::{TapGesture, Target};
 
 
 #[non_exhaustive] // must use `State::default()`
