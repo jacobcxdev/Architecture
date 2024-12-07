@@ -12,7 +12,7 @@ pub struct Font<'a> {
     size: f32,
 }
 
-impl<'a> Font<'a> {
+impl Font<'_> {
     /// Full font name that reflects all family and relevant subfamily descriptors.
     #[inline]
     pub fn full_name(&self) -> Option<String> {
@@ -78,15 +78,13 @@ impl<'a> Font<'a> {
     /// Capital height,
     #[inline]
     pub fn capital_height(&self) -> Option<f32> {
-        self.face
-            .capital_height().map(|x| x as f32)
+        self.face.capital_height().map(|x| x as f32)
     }
 
     /// x height.
     #[inline]
     pub fn x_height(&self) -> Option<f32> {
-        self.face
-            .x_height().map(|x| x as f32)
+        self.face.x_height().map(|x| x as f32)
     }
 
     /// Line gap,
@@ -133,14 +131,14 @@ impl<'a> Font<'a> {
 impl<'a> Font<'a> {
     /// Create a `Font` from the raw font data.
     #[inline(always)]
-    pub fn from(data: &'a [u8]) -> Option<FontConfig> {
+    pub fn from(data: &'a [u8]) -> Option<FontConfig<'a>> {
         Self::from_collection(data, 0)
     }
 
     /// Create a `Font` from a font collection.
     /// Returns the font at `index`, if any
     #[inline(never)]
-    pub fn from_collection(data: &'a [u8], index: u32) -> Option<FontConfig> {
+    pub fn from_collection(data: &'a [u8], index: u32) -> Option<FontConfig<'a>> {
         let face = Face::from_slice(data, index)?;
 
         Some(FontConfig {
@@ -205,8 +203,7 @@ impl<'a> FontConfig<'a> {
     ///
     #[inline]
     pub fn variation(mut self, tag: &[u8; 4], value: f32) -> Self {
-        self.variations
-            .push((Tag::from_bytes(tag), value));
+        self.variations.push((Tag::from_bytes(tag), value));
 
         self
     }

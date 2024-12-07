@@ -138,13 +138,7 @@ pub trait View: Sized {
         self
     }
 
-
-    fn on_tap<A, E>(
-        self,
-        id: Id,
-        action: A,
-        send: E,
-    ) -> TapGesture<Self, A, E>
+    fn on_tap<A, E>(self, id: Id, action: A, send: E) -> TapGesture<Self, A, E>
     where
         A: Clone,
         E: Effects<A>,
@@ -156,7 +150,6 @@ pub trait View: Sized {
             send,
         }
     }
-
 
     fn on_tap_target<A, E>(
         self,

@@ -56,7 +56,7 @@ impl Output {
     }
 }
 
-impl super::Output for Output {
+impl crate::Output for Output {
     fn begin(&mut self, x: f32, y: f32, rgba: [u8; 4], transform: &Transform) {
         if !self.data.is_empty() && (rgba != self.rgba || !transform.approx_eq(&self.transform)) {
             self.end_current_node();

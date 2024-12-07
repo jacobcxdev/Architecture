@@ -190,12 +190,11 @@ impl View for () {
     }
 
     #[inline(always)]
-    fn event(&self, event: Event, offset: Point, bounds: Bounds) {}
+    fn event(&self, _event: Event, _offset: Point, _bounds: Bounds) {}
 
     #[inline(always)]
-    fn draw(&self, bounds: Bounds, onto: &mut impl Output) {}
+    fn draw(&self, _bounds: Bounds, _onto: &mut impl Output) {}
 }
-
 
 impl<T: View, const N: usize> View for Horizontal<[T; N]> {
     #[inline]

@@ -96,7 +96,7 @@ impl View for Text<'_> {
             rgba: [u8; 4],
         }
 
-        impl<'a, F: Output> rustybuzz::ttf_parser::OutlineBuilder for Builder<'a, F> {
+        impl<F: Output> rustybuzz::ttf_parser::OutlineBuilder for Builder<'_, F> {
             fn move_to(&mut self, x: f32, y: f32) {
                 self.output.begin(x, y, self.rgba, &self.transform);
             }

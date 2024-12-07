@@ -22,7 +22,7 @@ pub trait Path: Sized {
 
 /// [Least-squares approximation of the circle using cubic Bézier curves][site]
 ///
-/// > David Ellsworth found the optimal value of c:  
+/// > David Ellsworth found the optimal value of c:
 /// >
 /// > c ≈ 0.5519703814011128603134107
 ///
@@ -177,6 +177,7 @@ impl<T: Path> View for Shape<T> {
     }
 
     #[inline(always)]
+    #[allow(clippy::bool_comparison)]
     fn needs_layout(&self) -> bool {
         self.size.get().is_finite() == false
     }

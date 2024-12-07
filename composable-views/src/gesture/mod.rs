@@ -11,7 +11,6 @@ mod tap;
 
 pub use tap::{TapGesture, Target};
 
-
 #[non_exhaustive] // must use `State::default()`
 #[derive(Copy, Clone, Default, Eq, PartialEq)]
 pub struct Values {

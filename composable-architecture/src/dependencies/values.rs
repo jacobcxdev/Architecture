@@ -25,7 +25,7 @@ impl<T> Default for Dependency<T> {
 /// - The methods of `Dependency` are very similar to those of [`std::option::Option`], as
 ///   dependencies are *optionally* present.
 /// - However, a `Dependency` on a type with a [`DependencyDefault`] also implements the
-///   [`AsRef`], [`Deref`] and [`Borrow`] traits. Event if a value has not been explicitly
+///   [`AsRef`], [`Deref`] and [`Borrow`] traits. Even if a value has not been explicitly
 ///   registered for it, the `Dependency` will still be able to [`as_ref`], [`deref`] and
 ///   [`borrow`] this default value.
 ///
