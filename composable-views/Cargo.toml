@@ -12,8 +12,12 @@ default = []
 composable.workspace = true
 rustybuzz = "0.20.1"
 lyon = "1.0.1"
-usvg = "0.44.0"
 svg = "0.18.0"
+
+clap = { version = "4.3", features = ["derive"], optional = true }
+usvg = { version = "0.44.0", optional = true }
+convert_case = { version = "0.6.0", optional = true }
+log = "0.4.22"
 
 [dependencies.ui_id]
 path = "src/ui_id"
@@ -22,15 +26,14 @@ path = "src/ui_id"
 [dev-dependencies]
 futures.workspace = true
 insta.workspace = true
-
 ntest_timeout.workspace = true
 divan.workspace = true
-
 
 winit = "0.30.5"
 meshopt = "0.4.0"
 muda = "0.15.3"
 wgpu = "23.0.0"
+
 
 # platforms
 [target.'cfg(target_os = "windows")'.dependencies.windows-sys]
@@ -39,3 +42,7 @@ version = "0.59.0"
 [target.'cfg(target_os = "macos")'.dependencies.cocoa]
 version = "0.26.0"
 
+[[bin]]
+name = "svg2path"
+path = "src/shapes/bin.rs"
+required-features = ["clap", "usvg", "convert_case"]
