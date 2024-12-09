@@ -1,6 +1,5 @@
-#![allow(unused_imports)]
-use crate::{Bounds, Event, Fixed, Output, Point, Size, View};
-// some of these are used in the macro
+#![allow(unused_imports)] // some of these are used in the macro
+use crate::{Bounds, Event, Fixed, FixedHeight, FixedWidth, Output, Point, Size, View};
 
 pub use spacing::Spacer;
 
@@ -59,6 +58,18 @@ macro_rules! tuple_impl {
                     size: Size::new(width, height),
                     view: self,
                 }
+            }
+
+            #[inline(always)]
+            #[allow(refining_impl_trait)]
+            fn width(self, width: f32) -> impl View {
+                FixedWidth { width, view: self }
+            }
+
+            #[inline(always)]
+            #[allow(refining_impl_trait)]
+            fn height(self, height: f32) -> impl View {
+                FixedHeight { height, view: self }
             }
 
             fn update_layout(&self, size: Size, bounds: Bounds) {
@@ -130,6 +141,18 @@ macro_rules! tuple_impl {
                     size: Size::new(width, height),
                     view: self,
                 }
+            }
+
+            #[inline(always)]
+            #[allow(refining_impl_trait)]
+            fn width(self, width: f32) -> impl View {
+                FixedWidth { width, view: self }
+            }
+
+            #[inline(always)]
+            #[allow(refining_impl_trait)]
+            fn height(self, height: f32) -> impl View {
+                FixedHeight { height, view: self }
             }
 
             #[inline(always)]
