@@ -15,8 +15,8 @@ use syn::parse::Parser;
 /// ```
 /// use itertools::Itertools;
 /// (0..1000)
-///     .map(|n| { return ui_id::ui_id!(n) })
-///     .collect::<std::vec::Vec<_>>()
+///     .map(|n: usize| { return ui_id::ui_id!(n) })
+///     .collect::<Vec<_>>()
 ///     .into_iter()
 ///     .combinations(2)
 ///     .into_iter()
@@ -37,7 +37,7 @@ pub fn ui_id(tokens: proc_macro::TokenStream) -> proc_macro::TokenStream {
             // If runtime parameters where passed into the macro, perform a 128-bit FNV-1a
             // mix-step to combine them with the current `ui_id` to generate a new one.
             let prime = 0x0000000001000000000000000000013Bu128;
-            #( hash = (hash ^ ((#exprs) as u128)).wrapping_mul(prime); )*
+            #( hash = (hash ^ u128::try_from(#exprs).unwrap()).wrapping_mul(prime); )*
 
             unsafe { std::num::NonZeroU128::new_unchecked(hash | 0x1u128) }
         }
