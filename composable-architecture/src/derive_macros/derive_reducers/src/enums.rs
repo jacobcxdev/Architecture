@@ -40,13 +40,13 @@ pub fn derive_macro(identifier: Ident, data: DataEnum) -> TokenStream {
                 action: Self::Action,
                 send: impl composable::Effects<Self::Action>,
             ) {
-                <Self as RecursiveReducer>::reduce(self, action.clone(), send.clone());
-
                 #[allow(unreachable_patterns)]
                 match self {
                     #( #child_reducers )*
                     _ => {}
                 }
+
+                <Self as RecursiveReducer>::reduce(self, action.clone(), send.clone());
             }
         }
     };

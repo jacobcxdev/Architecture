@@ -38,9 +38,9 @@ pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
                 action: Self::Action,
                 send: impl composable::Effects<Self::Action>,
             ) {
-                <Self as RecursiveReducer>::reduce(self, action.clone(), send.clone());
-
                 #( #child_reducers )*
+
+                <Self as RecursiveReducer>::reduce(self, action.clone(), send.clone());
             }
         }
     };
