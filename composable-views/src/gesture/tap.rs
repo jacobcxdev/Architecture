@@ -1,5 +1,5 @@
 use crate::gesture::{self, Id};
-use crate::{Bounds, Event, Output, Point, Size, View};
+use crate::{Bounds, Event, Output, Size, View};
 use composable::Effects;
 
 pub struct TapGesture<V, A, E> {
@@ -21,12 +21,12 @@ where
     }
 
     #[inline]
-    fn event(&self, event: Event, offset: Point, bounds: Bounds) {
-        if let Ok(gesture) = event.try_into() {
+    fn event(&self, event: Event, bounds: Bounds) {
+        if let Ok((gesture, offset)) = event.try_into() {
             if let Some(gesture::Response::UpInside) = gesture::recognizer(
                 self.id,
                 gesture,
-                offset,
+                offset.get(),
                 Bounds::from_origin_and_size(bounds.min, self.size()),
             ) {
                 self.send.action(self.action.clone())
@@ -52,17 +52,19 @@ impl<V: View> View for Target<V> {
     }
 
     #[inline]
-    fn event(&self, event: Event, offset: Point, bounds: Bounds) {
+    fn event(&self, event: Event, bounds: Bounds) {
         let mut target = bounds;
         target.min -= (self.minimum - self.size()) / 2.0;
         target.set_size(self.minimum.max(self.size()));
 
-        match target.contains_inclusive(offset) {
-            true => self.view.event(event, bounds.min, bounds),
-            false => self.view.event(event, offset, bounds),
-        };
+        match &event {
+            Event::Gesture(_, location) if target.contains_inclusive(location.get()) => {
+                location.set(bounds.min);
+            }
+            _ => {}
+        }
 
-        self.view.event(event, offset, bounds)
+        self.view.event(event, bounds)
     }
 
     #[inline]

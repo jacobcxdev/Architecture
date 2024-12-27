@@ -1,5 +1,5 @@
 #![allow(unused_imports)] // some of these are used in the macro
-use crate::{Bounds, Event, Fixed, FixedHeight, FixedWidth, Output, Point, Size, View};
+use crate::{Bounds, Event, Fixed, FixedHeight, FixedWidth, Output, Size, View};
 
 pub use spacing::Spacer;
 
@@ -28,12 +28,12 @@ macro_rules! tuple_impl {
             }
 
             #[inline]
-            fn event(&self, event: Event, offset: Point, mut bounds: Bounds) {
+            fn event(&self, event: Event, mut bounds: Bounds) {
                 self.update_layout(self.size(), bounds);
 
                 let ( $(ref $val,)+ ) = self;
                 $(
-                    $val.event(event, offset, bounds);
+                    $val.event(event.clone(), bounds);
                     bounds.min.y += $val.size().height;
                     bounds.min.y = f32::min(bounds.min.y, bounds.max.y);
                 )+
@@ -111,12 +111,12 @@ macro_rules! tuple_impl {
             }
 
             #[inline]
-            fn event(&self, event: Event, offset: Point, mut bounds: Bounds) {
+            fn event(&self, event: Event, mut bounds: Bounds) {
                 self.update_layout(self.size(), bounds);
 
                 let ( $(ref $val,)+ ) = self.0;
                 $(
-                    $val.event(event, offset, bounds);
+                    $val.event(event.clone(), bounds);
                     bounds.min.x += $val.size().width;
                     bounds.min.x = f32::min(bounds.min.x, bounds.max.x);
                 )+
@@ -213,7 +213,7 @@ impl View for () {
     }
 
     #[inline(always)]
-    fn event(&self, _event: Event, _offset: Point, _bounds: Bounds) {}
+    fn event(&self, _event: Event, _bounds: Bounds) {}
 
     #[inline(always)]
     fn draw(&self, _bounds: Bounds, _onto: &mut impl Output) {}
@@ -232,9 +232,9 @@ impl<T: View, const N: usize> View for Horizontal<[T; N]> {
     }
 
     #[inline]
-    fn event(&self, event: Event, offset: Point, bounds: Bounds) {
+    fn event(&self, event: Event, bounds: Bounds) {
         self.0.iter().fold(bounds, |mut bounds, view| {
-            view.event(event, offset, bounds);
+            view.event(event.clone(), bounds);
 
             bounds.min.x += view.size().width;
             bounds.min.x = f32::min(bounds.min.x, bounds.max.x);

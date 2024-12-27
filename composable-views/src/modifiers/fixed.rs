@@ -1,4 +1,4 @@
-use crate::{Bounds, Event, Output, Point, Size, View};
+use crate::{Bounds, Event, Output, Size, View};
 
 ///
 pub struct Fixed<V> {
@@ -13,9 +13,9 @@ impl<V: View> View for Fixed<V> {
     }
 
     #[inline]
-    fn event(&self, event: Event, offset: Point, mut bounds: Bounds) {
+    fn event(&self, event: Event, mut bounds: Bounds) {
         bounds.set_size(self.size);
-        self.view.event(event, offset, bounds)
+        self.view.event(event, bounds)
     }
 
     #[inline]
@@ -41,12 +41,12 @@ impl<V: View> View for FixedWidth<V> {
     }
 
     #[inline]
-    fn event(&self, event: Event, offset: Point, mut bounds: Bounds) {
+    fn event(&self, event: Event, mut bounds: Bounds) {
         let mut size = bounds.size();
         size.width = self.width;
         bounds.set_size(size);
 
-        self.view.event(event, offset, bounds)
+        self.view.event(event, bounds)
     }
 
     #[inline]
@@ -75,12 +75,12 @@ impl<V: View> View for FixedHeight<V> {
     }
 
     #[inline]
-    fn event(&self, event: Event, offset: Point, mut bounds: Bounds) {
+    fn event(&self, event: Event, mut bounds: Bounds) {
         let mut size = bounds.size();
         size.height = self.height;
         bounds.set_size(size);
 
-        self.view.event(event, offset, bounds)
+        self.view.event(event, bounds)
     }
 
     #[inline]

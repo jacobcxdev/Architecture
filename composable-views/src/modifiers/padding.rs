@@ -1,4 +1,4 @@
-use crate::{Bounds, Event, Offsets, Output, Point, Size, View};
+use crate::{Bounds, Event, Offsets, Output, Size, View};
 
 pub struct Padding<V> {
     pub(crate) view: V,
@@ -16,9 +16,9 @@ impl<V: View> View for Padding<V> {
     }
 
     #[inline(always)]
-    fn event(&self, event: Event, offset: Point, bounds: Bounds) {
+    fn event(&self, event: Event, bounds: Bounds) {
         self.view
-            .event(event, offset, bounds.inner_box(self.offsets))
+            .event(event, bounds.inner_box(self.offsets))
     }
 
     #[inline]

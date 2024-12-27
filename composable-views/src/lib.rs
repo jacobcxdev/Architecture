@@ -1,3 +1,4 @@
+use std::cell::Cell;
 use std::ops::Deref;
 
 pub use lyon::math::{Box2D as Bounds, Point, Size, Transform};
@@ -34,7 +35,7 @@ pub trait View: Sized {
     fn size(&self) -> Size;
     /// User-interface [`Event`] handling of the `View`
     #[allow(unused_variables)]
-    fn event(&self, event: Event, offset: Point, bounds: Bounds) {}
+    fn event(&self, event: Event, bounds: Bounds) {}
     /// How the `View` is drawn
     fn draw(&self, bounds: Bounds, onto: &mut impl Output);
 
@@ -181,8 +182,8 @@ impl<T: View> View for Box<T> {
     }
 
     #[inline(always)]
-    fn event(&self, event: Event, offset: Point, bounds: Bounds) {
-        self.deref().event(event, offset, bounds)
+    fn event(&self, event: Event, bounds: Bounds) {
+        self.deref().event(event, bounds)
     }
 
     #[inline(always)]
@@ -200,9 +201,9 @@ impl<T: View> View for Option<T> {
         Size::zero()
     }
 
-    fn event(&self, event: Event, offset: Point, bounds: Bounds) {
+    fn event(&self, event: Event, bounds: Bounds) {
         if let Some(view) = self {
-            view.event(event, offset, bounds)
+            view.event(event, bounds)
         }
     }
 
@@ -221,10 +222,10 @@ impl<T: View, E: View> View for Result<T, E> {
         }
     }
 
-    fn event(&self, event: Event, offset: Point, bounds: Bounds) {
+    fn event(&self, event: Event, bounds: Bounds) {
         match self {
-            Ok(view) => view.event(event, offset, bounds),
-            Err(view) => view.event(event, offset, bounds),
+            Ok(view) => view.event(event, bounds),
+            Err(view) => view.event(event, bounds),
         }
     }
 
@@ -238,9 +239,9 @@ impl<T: View, E: View> View for Result<T, E> {
 
 /// [`View`] events.
 #[allow(missing_docs)]
-#[derive(Copy, Clone, Debug, From, TryInto)]
+#[derive(Clone, Debug, From, TryInto)]
 pub enum Event {
-    Gesture(Gesture),
+    Gesture(Gesture, Cell<Point>),
     Resize { width: u32, height: u32 },
     Rescale { scale: f32 },
     Redraw,
