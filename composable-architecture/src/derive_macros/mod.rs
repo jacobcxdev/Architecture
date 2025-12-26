@@ -7,7 +7,7 @@
 //!   `#[derive(TryInto)]` on a `Action` whose variants contain another [`Reducer`]’s `Action`s
 //!   allows an attempted conversion to…
 //! - [`From`]  
-//!   `#[derive(TryInto)]` on a `Action` whose variants contain another [`Reducer`]’s `Action`s
+//!   `#[derive(From)]` on a `Action` whose variants contain another [`Reducer`]’s `Action`s
 //!   allows an attempted conversion from…
 //!
 //! These macros produce efficient implementations of the [`Reducer`], [`std::convert::TryInto`]
@@ -126,7 +126,7 @@
 //! ```
 //! 1. Now that `Action`s are being passed to multiple `Reducers` they must be `Clone`.
 //! 2. The `RecursiveReducer` derive macro constructs a recursive `Reducer` from the `struct`.
-//! 3. The `From` and `TryInfo` derive macros ensure that conversions work, when they should,
+//! 3. The `From` and `TryInto` derive macros ensure that conversions work, when they should,
 //!    between parent and child `Action`s. These conversions utilize #4…
 //! 4. The parent has one (and only one) `Action` for the `Action`s of each of its children.
 //! 5. Finally, an implementation of the `RecursiveReducer` trait containing the parent’s `reduce`

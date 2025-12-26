@@ -3,6 +3,8 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DataStruct, Ident};
 
+use crate::util;
+
 pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
     let child_reducers = data
         .fields
@@ -11,16 +13,25 @@ pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
             field.attrs.iter().all(|attr| {
                 !attr.path().is_ident("reducer")
                     || attr
-                        .parse_args::<Ident>()
-                        .map(|arg| arg != "skip")
-                        .unwrap_or(true)
+                    .parse_args::<Ident>()
+                    .map(|arg| arg != "skip")
+                    .unwrap_or(true)
             })
         })
         .map(|field| {
             let name = &field.ident;
-            quote! {
-                if let Ok(action) = action.clone().try_into() {
-                    composable::Reducer::reduce(&mut self.#name, action, send.scope());
+            let ty = &field.ty;
+
+            if util::is_keyed_state(ty) {
+                let into_state = quote! { self.#name };
+                let recurse = util::keyed_child_reduce(into_state);
+
+                quote! { #recurse }
+            } else {
+                quote! {
+                    if let Ok(action) = action.clone().try_into() {
+                        composable::Reducer::reduce(&mut self.#name, action, send.scope());
+                    }
                 }
             }
         });
@@ -38,9 +49,9 @@ pub fn derive_macro(identifier: Ident, data: DataStruct) -> TokenStream {
                 action: Self::Action,
                 send: impl composable::Effects<Self::Action>,
             ) {
-                #( #child_reducers )*
-
                 <Self as RecursiveReducer>::reduce(self, action.clone(), send.clone());
+
+                #( #child_reducers )*
             }
         }
     };

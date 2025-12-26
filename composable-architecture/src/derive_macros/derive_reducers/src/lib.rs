@@ -5,6 +5,7 @@ use syn::{parse_macro_input, Data, DeriveInput};
 
 mod enums;
 mod structs;
+mod util;
 
 /// ## Compiler Errors
 ///

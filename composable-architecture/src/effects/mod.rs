@@ -15,6 +15,8 @@ pub(crate) use task::Executor;
 #[doc(hidden)]
 pub use task::Task;
 
+use crate::Keyed;
+
 mod delay;
 pub(crate) mod scheduler;
 mod task;
@@ -80,6 +82,30 @@ pub trait Effects: Clone + Scheduler<Action = <Self as Effects>::Action> {
         <Self as Effects>::Action: From<ChildAction>,
     {
         Scoped(self.clone(), Marker)
+    }
+
+    /// Scopes the `Effects` down to one that sends keyed child actions.
+    ///
+    /// This is used to route child actions through the parent action type while
+    /// carrying an identifier that selects which child state should handle it.
+    /// 
+    /// # Note
+    /// A parent `Action` type must have exactly one conversion route from `Keyed<K, ChildAction>`
+    /// (i.e. `Action: From<Keyed<K, ChildAction>>`) for `scope_keyed` to be unambiguous.
+    ///
+    /// If you need multiple keyed collections of the same child action type under one parent,
+    /// prefer using distinct *key types* (newtype keys) so the routed payload types differ:
+    ///
+    /// - `Keyed<TabsKey, ChildAction>`
+    /// - `Keyed<JobsKey, ChildAction>`
+    #[inline(always)]
+    fn scope_keyed<K, ChildAction>(&self, key: K) -> ScopedKeyed<Self, K, ChildAction>
+    where
+        <Self as Effects>::Action: From<Keyed<K, ChildAction>>,
+        K: Clone + 'static,
+        ChildAction: 'static,
+    {
+        ScopedKeyed(self.clone(), key, Marker)
     }
 }
 
@@ -276,6 +302,68 @@ where
         Self::Action: Clone + 'static,
     {
         self.0.schedule(action.into(), after)
+    }
+}
+
+/// An `Effects` that scopes its `Action`s to one that sends keyed child actions.
+///
+/// This `struct` is created by the [`scope_keyed`] method on [`Effects`]. See its
+/// documentation for more.
+///
+/// [`scope_keyed`]: Effects::scope_keyed
+pub struct ScopedKeyed<Parent, K, Child>(Parent, K, Marker<Child>);
+
+// Using `#[derive(Clone)]` adds a `Clone` requirement to all `Action`s
+impl<Parent: Clone, K: Clone, Child> Clone for ScopedKeyed<Parent, K, Child> {
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        ScopedKeyed(self.0.clone(), self.1.clone(), Marker)
+    }
+}
+
+impl<Parent, K, Child> Effects for ScopedKeyed<Parent, K, Child>
+where
+    Parent: Effects,
+    <Parent as Effects>::Action: Clone + From<Keyed<K, Child>> + 'static,
+    K: Clone + 'static,
+    Child: 'static,
+{
+    type Action = Child;
+
+    #[inline(always)]
+    fn action(&self, action: impl Into<<Self as Effects>::Action>) {
+        self.0.action(Keyed::new(self.1.clone(), action.into()));
+    }
+
+    #[inline(always)]
+    fn task<S: Stream<Item = Child> + 'static>(&self, stream: S) -> Task {
+        let key = self.1.clone();
+        self.0
+            .task(stream.map(move |action| Keyed::new(key.clone(), action).into()))
+    }
+}
+
+#[doc(hidden)]
+impl<Parent, K, Child> Scheduler for ScopedKeyed<Parent, K, Child>
+where
+    Parent: Effects,
+    <Parent as Effects>::Action: From<Keyed<K, Child>> + Clone + 'static,
+    K: Clone + 'static,
+    Child: 'static,
+{
+    type Action = Child;
+
+    #[inline(always)]
+    fn schedule(
+        &self,
+        action: Self::Action,
+        after: impl IntoIterator<Item = Delay> + 'static,
+    ) -> Task
+    where
+        Self::Action: Clone + 'static,
+    {
+        self.0
+            .schedule(Keyed::new(self.1.clone(), action).into(), after)
     }
 }
 

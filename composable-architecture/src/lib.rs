@@ -37,3 +37,5 @@ pub mod derive_macros;
 pub mod effects;
 mod reducer;
 mod store;
+pub mod keyed;
+pub use keyed::{Keyed, KeyedState};
