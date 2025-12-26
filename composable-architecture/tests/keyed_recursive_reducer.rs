@@ -2,6 +2,10 @@ use std::collections::HashMap;
 
 use composable::*;
 
+/// Keyed reducers route `Keyed<K, ChildAction>` into one child state selected by `K`.
+/// Effects emitted by the child are scoped back through the parent action type while
+/// preserving the same key.
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 struct Id(u32);
 
@@ -40,6 +44,9 @@ impl Reducer for ChildState {
 }
 
 #[test]
+/// A keyed collection:
+/// - routes actions by key
+/// - routes effect-driven follow-up actions back to the same key
 fn keyed_struct_routes_actions_and_effects_back_to_same_child() {
     #[derive(Clone, Debug, Default, PartialEq, RecursiveReducer)]
     struct State {
@@ -86,9 +93,13 @@ fn keyed_struct_routes_actions_and_effects_back_to_same_child() {
         store.into_inner().children.get(&Id(2)).unwrap().log,
         Vec::<&'static str>::new(),
     );
+    // And skipped fields should remain default/unmodified.
+    // (If the derive attempted to recurse into `mirror`, this test would not compile.)
 }
 
 #[test]
+/// Multiple keyed collections can coexist as long as their keyed payload types differ.
+/// Using distinct key newtypes makes `Keyed<K, ChildAction>` distinct and avoids conversion ambiguity.
 fn multiple_keyed_fields_work_when_keys_are_distinct_types() {
     #[derive(Clone, Debug, Default, PartialEq, RecursiveReducer)]
     struct State {

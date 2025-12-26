@@ -95,7 +95,7 @@ impl Font<'_> {
 
     /// Returns a `Text` in this font.
     #[inline(never)]
-    pub fn text(&self, rgba: [u8; 4], string: &str) -> Text {
+    pub fn text(&self, rgba: [u8; 4], string: &str) -> Text<'_> {
         let mut unicode = UnicodeBuffer::new();
         unicode.push_str(string);
 

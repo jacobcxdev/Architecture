@@ -10,8 +10,9 @@
 //!   `#[derive(From)]` on a `Action` whose variants contain another [`Reducer`]’s `Action`s
 //!   allows an attempted conversion from…
 //!
-//! These macros produce efficient implementations of the [`Reducer`], [`std::convert::TryInto`]
-//! and [`std::convert::From`] traits so that they do not have to be implemented manually.
+//! These macros produce efficient implementations of [`Reducer`] routing glue, and (via re-exports
+//! of `derive_more`) generate `std::convert::From` and `std::convert::TryInto` implementations so
+//! conversions do not have to be written manually.
 //!
 //! ##### Automatic Derived Reducers
 //!
@@ -26,6 +27,20 @@
 //! [`Reducer`]: crate::Reducer
 //! [`TryInto`]: #reexports
 //! [`From`]: #reexports
+//!
+//! # Keyed child reducers
+//!
+//! Some parent reducers own a *dynamic* collection of child states (tabs, rows, items, etc). For
+//! this pattern, the crate provides [`KeyedState`](crate::KeyedState) and [`Keyed`](crate::Keyed).
+//!
+//! - A keyed child field looks like: `children: KeyedState<Key, ChildState>`.
+//! - A routed action payload looks like: `Keyed<Key, ChildAction>`.
+//!
+//! To make routing work:
+//! - The parent `Action` must have exactly one conversion route to/from `Keyed<Key, ChildAction>`
+//!   (typically a dedicated enum variant).
+//! - Child effects should be scoped with [`Effects::scope_keyed`](crate::effects::Effects::scope_keyed),
+//!   which automatically re-wraps child actions back into `Keyed<Key, ChildAction>` for the same key.
 //!
 //! # Composite Reducers
 //!
@@ -215,13 +230,13 @@
 //! }
 //! ```
 //!
-//! `authenticated::Action`s will only run when the state is `LoggedIn` and vice-versa..
+//! `authenticated::Action`s will only run when the state is `LoggedIn` and vice versa.
 //!
 //! ---
 //! <br />
 //!
 //! Now, the [automatic derive reducer] behavior of [`Option`] is easy to described.
-//! It behaves is as if it were:
+//! It behaves as if it were:
 //!
 //! ```ignore
 //! #[derive(RecursiveReducer)]
@@ -250,6 +265,6 @@ pub trait RecursiveReducer {
     type Action;
 
     /// This `reduce` should perform any actions that are needed _before_ the macro recurses
-    /// into the other reducers.
+    /// into child reducers.
     fn reduce(&mut self, action: Self::Action, send: impl Effects<Self::Action>);
 }

@@ -1,4 +1,7 @@
 // tests/mixed_recursive_reducer.rs
+//
+// Mixed recursive reducers: a parent that has both standard child state and keyed child state.
+// Contract: routing and effects must not “cross” between standard and keyed children.
 
 use std::hash::Hash;
 
@@ -90,10 +93,7 @@ impl RecursiveReducer for State {
             Action::Standard(StandardChildAction::Pong) => {
                 self.parent_log.push("parent:standard:pong");
             }
-            Action::Keyed(Keyed {
-                              action: KeyedChildAction::Pong,
-                              ..
-                          }) => {
+        Action::Keyed(Keyed { action: KeyedChildAction::Pong, .. }) => {
                 self.parent_log.push("parent:keyed:pong");
             }
             _ => {}

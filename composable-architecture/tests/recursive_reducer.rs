@@ -1,6 +1,10 @@
 use composable::*;
 
 #[test]
+/// Composite struct reducers:
+/// - Parent `RecursiveReducer::reduce` runs *before* child reducers.
+/// - Parent runs for *every* action (including effect-driven follow-ups).
+/// - Child effects are scoped back through the parent action type.
 fn composite_struct_routes_child_actions_and_effects_back_to_same_child() {
     #[derive(Clone, Debug, PartialEq)]
     struct ChildState {
@@ -50,7 +54,9 @@ fn composite_struct_routes_child_actions_and_effects_back_to_same_child() {
         type Action = Action;
 
         fn reduce(&mut self, _action: Action, _send: impl Effects<Action>) {
-            // Recursive reducers run before derived child reducers.
+            // Parent runs first (pre-order traversal).
+            // This should happen for the initial action *and* for any action
+            // produced as an effect.
             self.child.log.push("parent");
         }
     }
@@ -74,6 +80,10 @@ fn composite_struct_routes_child_actions_and_effects_back_to_same_child() {
 }
 
 #[test]
+/// Composite struct reducers:
+/// - Only the targeted child reducer should run.
+/// - Effects produced by a child should route back to that same child.
+/// - Sibling state should not be touched.
 fn composite_struct_does_not_route_actions_or_effects_to_the_wrong_child() {
     #[derive(Clone, Debug, PartialEq)]
     struct AChildState {
@@ -190,6 +200,9 @@ fn composite_struct_does_not_route_actions_or_effects_to_the_wrong_child() {
 }
 
 #[test]
+/// Alternate enum reducers:
+/// - Only the active variant’s child reducer should receive routed actions.
+/// - The parent `RecursiveReducer::reduce` still runs regardless of which action is sent.
 fn alternate_enum_only_routes_actions_to_the_active_variant_but_parent_still_runs() {
     #[derive(Clone, Debug, PartialEq)]
     struct AState {
@@ -279,6 +292,8 @@ fn alternate_enum_only_routes_actions_to_the_active_variant_but_parent_still_run
 
     // Not for the active variant: the child reducer should not run, but the parent still runs.
     store.send(BAction::Ping.into(), |state| {
+        // `BAction::Ping` cannot be routed into `AAction`, so the derived child routing does nothing,
+        // but the parent `reduce` is still invoked for the action.
         let State::A(state) = state else { panic!("expected State::A") };
         state.log = vec!["parent", "a:ping", "parent", "a:pong", "parent"];
     });

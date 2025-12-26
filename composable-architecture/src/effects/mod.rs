@@ -1,5 +1,13 @@
 #![doc = include_str!("README.md")]
 
+//! Implementation notes
+//!
+//! - In a live [`Store`](crate::Store), effects emitted during an action are queued and drained
+//!   before processing subsequent external actions. This provides a strong ordering guarantee for
+//!   internal effect chains.
+//! - In [`TestStore`](crate::TestStore), effects are recorded but not automatically drained; tests
+//!   must explicitly `recv(...)` them.
+
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::iter::from_fn;
@@ -21,9 +29,9 @@ mod delay;
 pub(crate) mod scheduler;
 mod task;
 
-/// `Effects` are used within `Reducer`s to propagate `Action`s as side-effects of performing other `Action`s.
+/// `Effects` are used within `Reducer`s to propagate follow-up `Action`s as side-effects of handling an action.
 ///
-/// `Effects` are also [`Scheduler`]s — able to apply modifiers to when (and how often) `Action`s. are sent.
+/// `Effects` are also [`Scheduler`]s—able to apply modifiers to when (and how often) actions are sent.
 ///
 /// See [the module level documentation](self) for more.
 pub trait Effects: Clone + Scheduler<Action = <Self as Effects>::Action> {
@@ -32,6 +40,8 @@ pub trait Effects: Clone + Scheduler<Action = <Self as Effects>::Action> {
 
     /// An effect that sends an [`Action`][`Self::Action`] through
     /// the `Store`’s [`Reducer`][`crate::Reducer`].
+    ///
+    /// In a live [`Store`](crate::Store), actions emitted here are processed before later external actions.
     #[doc(alias = "send")]
     fn action(&self, action: impl Into<<Self as Effects>::Action>);
 
@@ -42,6 +52,8 @@ pub trait Effects: Clone + Scheduler<Action = <Self as Effects>::Action> {
     /// Use this method if you need to ability to [`cancel`][Task::cancel] the task
     /// while it is running. Otherwise [`future`][Effects::future] or [`stream`][Effects::stream]
     /// should be preferred.
+    ///
+    /// The returned [`Task`](crate::Task) may contain no handle if the store is shutting down.
     fn task<S: Stream<Item = <Self as Effects>::Action> + 'static>(&self, stream: S) -> Task;
 
     /// An effect that runs a [`Future`][`std::future`] and, if it returns an
@@ -73,7 +85,7 @@ pub trait Effects: Clone + Scheduler<Action = <Self as Effects>::Action> {
     ///     reduce(&mut self.child_reducer, action, effects.scope());
     /// }
     /// ```
-    /// on each child-reducer.
+    /// on each child reducer.
     ///
     /// [`RecursiveReducer`]: crate::derive_macros
     #[inline(always)]
@@ -109,7 +121,7 @@ pub trait Effects: Clone + Scheduler<Action = <Self as Effects>::Action> {
     }
 }
 
-/// [`Effects`] are also `Scheduler`s — able to apply modifiers to when (and how often) `Action`s. are sent.
+/// [`Effects`] are also schedulers—able to apply modifiers to when (and how often) actions are sent.
 pub trait Scheduler {
     /// The `Action` sends scheduled by this `Scheduler`.
     type Action;
@@ -241,6 +253,7 @@ pub enum Interval {
 }
 
 impl Interval {
+    /// Returns the underlying duration regardless of leading/trailing semantics.
     pub fn duration(&self) -> Duration {
         match self {
             Interval::Leading(duration) => *duration,
