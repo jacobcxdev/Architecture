@@ -2,7 +2,7 @@ name: Continuous integration # https://github.com/dtolnay/rust-toolchain
 
 on:
   pull_request:
-    branches: [ "develop" ]
+    branches: [ "main" ]
   push:
     paths:
       - ".github/workflows/ci.yml"
