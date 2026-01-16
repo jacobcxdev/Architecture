@@ -93,7 +93,10 @@ impl RecursiveReducer for State {
             Action::Standard(StandardChildAction::Pong) => {
                 self.parent_log.push("parent:standard:pong");
             }
-        Action::Keyed(Keyed { action: KeyedChildAction::Pong, .. }) => {
+            Action::Keyed(Keyed {
+                action: KeyedChildAction::Pong,
+                ..
+            }) => {
                 self.parent_log.push("parent:keyed:pong");
             }
             _ => {}
@@ -118,12 +121,15 @@ fn mixed_struct_routes_standard_actions_and_effects_without_touching_keyed_child
     });
 
     let state = store.into_inner();
-    assert_eq!(state.keyed.get(&Id(1)).unwrap().log, Vec::<&'static str>::new());
+    assert_eq!(
+        state.keyed.get(&Id(1)).unwrap().log,
+        Vec::<&'static str>::new()
+    );
 }
 
 #[test]
-fn mixed_struct_routes_keyed_actions_and_effects_back_to_same_child_without_touching_standard_child()
-{
+fn mixed_struct_routes_keyed_actions_and_effects_back_to_same_child_without_touching_standard_child(
+) {
     let mut state = State::default();
     state.keyed.insert(Id(1), KeyedChildState::default());
 

@@ -281,12 +281,16 @@ fn alternate_enum_only_routes_actions_to_the_active_variant_but_parent_still_run
     let mut store = TestStore::with_initial(State::A(AState { log: vec![] }));
 
     store.send(AAction::Ping.into(), |state| {
-        let State::A(state) = state else { panic!("expected State::A") };
+        let State::A(state) = state else {
+            panic!("expected State::A")
+        };
         state.log = vec!["parent", "a:ping"];
     });
 
     store.recv(AAction::Pong.into(), |state| {
-        let State::A(state) = state else { panic!("expected State::A") };
+        let State::A(state) = state else {
+            panic!("expected State::A")
+        };
         state.log = vec!["parent", "a:ping", "parent", "a:pong"];
     });
 
@@ -294,7 +298,9 @@ fn alternate_enum_only_routes_actions_to_the_active_variant_but_parent_still_run
     store.send(BAction::Ping.into(), |state| {
         // `BAction::Ping` cannot be routed into `AAction`, so the derived child routing does nothing,
         // but the parent `reduce` is still invoked for the action.
-        let State::A(state) = state else { panic!("expected State::A") };
+        let State::A(state) = state else {
+            panic!("expected State::A")
+        };
         state.log = vec!["parent", "a:ping", "parent", "a:pong", "parent"];
     });
 
@@ -302,7 +308,9 @@ fn alternate_enum_only_routes_actions_to_the_active_variant_but_parent_still_run
     let mut store = TestStore::with_initial(State::B(BState { log: vec![] }));
 
     store.send(BAction::Ping.into(), |state| {
-        let State::B(state) = state else { panic!("expected State::B") };
+        let State::B(state) = state else {
+            panic!("expected State::B")
+        };
         state.log = vec!["parent", "b:ping"];
     });
 }
