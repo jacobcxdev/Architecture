@@ -59,7 +59,7 @@ pub trait Reducer {
     fn reduce(&mut self, action: Self::Action, send: impl Effects<Self::Action>);
 }
 
-/// Box<T> is a Reducer whenever T is a Reducer.
+/// `Box<T>` is a Reducer whenever T is a Reducer.
 ///
 /// This is a convenience for heap-allocating reducer state while preserving the same action type.
 impl<T: Reducer> Reducer for Box<T> {
@@ -72,7 +72,7 @@ impl<T: Reducer> Reducer for Box<T> {
     }
 }
 
-/// Option<T> is a Reducer whenever T is a Reducer.
+/// `Option<T>` is a Reducer whenever T is a Reducer.
 ///
 /// When the option is None, incoming actions are ignored (and no effects are produced).
 impl<T: Reducer> Reducer for Option<T> {

@@ -53,7 +53,7 @@ pub trait Effects: Clone + Scheduler<Action = <Self as Effects>::Action> {
     /// while it is running. Otherwise [`future`][Effects::future] or [`stream`][Effects::stream]
     /// should be preferred.
     ///
-    /// The returned [`Task`](crate::Task) may contain no handle if the store is shutting down.
+    /// The returned [`Task`] may contain no handle if the store is shutting down.
     fn task<S: Stream<Item = <Self as Effects>::Action> + 'static>(&self, stream: S) -> Task;
 
     /// An effect that runs a [`Future`][`std::future`] and, if it returns an
@@ -100,7 +100,7 @@ pub trait Effects: Clone + Scheduler<Action = <Self as Effects>::Action> {
     ///
     /// This is used to route child actions through the parent action type while
     /// carrying an identifier that selects which child state should handle it.
-    /// 
+    ///
     /// # Note
     /// A parent `Action` type must have exactly one conversion route from `Keyed<K, ChildAction>`
     /// (i.e. `Action: From<Keyed<K, ChildAction>>`) for `scope_keyed` to be unambiguous.

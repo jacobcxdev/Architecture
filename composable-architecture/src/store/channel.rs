@@ -29,6 +29,7 @@ enum Msg<T> {
 struct Shared<T> {
     queue: VecDeque<Msg<T>>,
     waker: Option<Waker>,
+    senders: usize,
 }
 
 impl<T> Default for Shared<T> {
@@ -36,6 +37,7 @@ impl<T> Default for Shared<T> {
         Shared {
             queue: Default::default(),
             waker: Default::default(),
+            senders: 0,
         }
     }
 }
@@ -74,7 +76,7 @@ impl<T> Stream for Receiver<T> {
             // A `Barrier` will always follow a `Value` and thus should have
             // been moved into the buffer during the swap above.
             Some(Msg::Barrier(_)) => unreachable!(),
-            None if Arc::strong_count(inner.shared) == 1 => Poll::Ready(None), // no receivers remaining
+            None if shared.senders == 0 => Poll::Ready(None), // no receivers remaining
             None => {
                 match shared.waker.as_mut() {
                     None => shared.waker = Some(cx.waker().clone()),
@@ -94,6 +96,10 @@ pub struct Sender<T> {
 
 impl<T> Clone for Sender<T> {
     fn clone(&self) -> Self {
+        let mut shared = self.shared.lock().unwrap();
+        shared.senders += 1;
+        drop(shared);
+
         Sender {
             shared: self.shared.clone(),
         }
@@ -102,7 +108,9 @@ impl<T> Clone for Sender<T> {
 
 impl<T> Drop for Sender<T> {
     fn drop(&mut self) {
-        self.wake_after(|_| { /* drop */ })
+        self.wake_after(|mut shared| {
+            shared.senders -= 1;
+        })
     }
 }
 
@@ -175,9 +183,10 @@ impl<T> Clone for WeakSender<T> {
 
 impl<T> WeakSender<T> {
     pub fn upgrade(&self) -> Option<Sender<T>> {
-        self.shared
-            .upgrade() //
-            .map(|shared| Sender { shared })
+        self.shared.upgrade().map(|shared| {
+            shared.lock().unwrap().senders += 1;
+            Sender { shared }
+        })
     }
 }
 
@@ -199,7 +208,11 @@ impl<T> WeakReceiver<T> {
 
 /// Create a new channel pair.
 pub fn channel<T>() -> (Sender<T>, WeakReceiver<T>) {
-    let shared = Default::default();
+    let shared = Shared {
+        senders: 1,
+        ..Default::default()
+    };
+    let shared = Arc::new(Mutex::new(shared));
 
     let recv = WeakReceiver {
         shared: Arc::downgrade(&shared),

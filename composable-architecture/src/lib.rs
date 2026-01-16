@@ -1,5 +1,5 @@
 #![doc = include_str!("../../README.md")]
-#![cfg_attr(docsrs, feature(doc_auto_cfg))] // show features flags in documentation
+// #![cfg_attr(docsrs, feature(doc_auto_cfg))] // feature removed in 1.92.0
 #![deny(rustdoc::broken_intra_doc_links)]
 #![deny(unsafe_code)]
 #![allow(missing_docs)]
@@ -119,7 +119,7 @@ impl<T, Action> Effects<Action> for T where T: effects::Effects<Action = Action>
 
 pub mod derive_macros;
 pub mod effects;
+pub mod keyed;
 mod reducer;
 mod store;
-pub mod keyed;
 pub use keyed::{Keyed, KeyedState};
